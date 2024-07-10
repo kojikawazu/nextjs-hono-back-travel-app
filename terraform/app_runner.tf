@@ -72,6 +72,14 @@ resource "aws_apprunner_service" "back_travel_service" {
       image_repository_type = "ECR"
       image_configuration {
         port = var.api_port
+
+        runtime_environment_variables = {
+          SUPABASE_URL = var.supabase_url
+          SUPABASE_KEY = var.supabase_key
+          DATABASE_URL = var.database_url
+          CORS_ADDRESS = var.cors_address
+          PORT         = var.api_port
+        }
       }
     }
   }
