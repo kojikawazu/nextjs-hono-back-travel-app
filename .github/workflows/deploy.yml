@@ -27,6 +27,14 @@ jobs:
         run: |
           aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.ECR_REPOSITORY }}
 
+      - name: Create .env file
+        run: |
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" >> .env
+          echo "SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" >> .env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> .env
+          echo "CORS_ADDRESS=${{ secrets.CORS_ADDRESS }}" >> .env
+          echo "PORT=${{ secrets.PORT }}" >> .env
+
       - name: Build, tag, and push Docker image to ECR
         env:
           ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
