@@ -48,7 +48,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          SERVICE_NAME: hono-back-travel-app-dev-service
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          SERVICE_NAME: ${{ secrets.APP_RUNNER_SERVICE }}
           IMAGE_URI: ${{ secrets.ECR_REPOSITORY }}:latest
         run: |
-          aws apprunner update-service --service-arn arn:aws:apprunner:${{ secrets.AWS_REGION }}:605030569844:service/$SERVICE_NAME --source-configuration ImageRepository={ImageIdentifier=$IMAGE_URI,ImageRepositoryType=ECR}
+          aws apprunner update-service --service-arn arn:aws:apprunner:${{ secrets.AWS_REGION }}:${{ secrets.AWS_ACCOUNT_ID }}:service/${{ env.SERVICE_NAME }} --source-configuration "{\"ImageRepository\":{\"ImageIdentifier\":\"${{ env.IMAGE_URI }}\",\"ImageRepositoryType\":\"ECR\"}}"
