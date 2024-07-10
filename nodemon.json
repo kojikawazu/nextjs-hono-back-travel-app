@@ -1,0 +1,5 @@
+{
+    "watch": ["index.ts", "src"],
+    "ext": "ts,js,json",
+    "exec": "bun run index.ts"
+}
