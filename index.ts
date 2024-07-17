@@ -5,6 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { createClient } from '@supabase/supabase-js';
 import { config } from './src/config';
 import test from './src/routes/test-route/test-routes';
+import projects from './src/routes/project-route/project-routes';
 
 const app = new Hono();
 const prisma = new PrismaClient();
@@ -18,6 +19,7 @@ app.use('*', cors({
 
 app.get('/', (c) => c.text('Hello, Hono!'));
 app.route('/test-route', test);
+app.route('/projects', projects);
 
 serve({
   fetch: app.fetch,

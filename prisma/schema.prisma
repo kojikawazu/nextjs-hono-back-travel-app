@@ -9,10 +9,21 @@ datasource db {
 }
 
 model User {
-  id        String   @id
-  email     String   @unique
-  fullName  String?
+  id        String    @id @default(uuid())
+  email     String    @unique
   avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime
+  createdAt DateTime  @default(now())
+  fullName  String?
+  updatedAt DateTime  @updatedAt
+  Project   Project[]
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
 }
