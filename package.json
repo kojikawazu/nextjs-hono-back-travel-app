@@ -9,10 +9,10 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
-    "@prisma/client": "^5.16.2",
+    "@prisma/client": "^5.17.0",
     "@supabase/supabase-js": "^2.44.3",
     "dotenv": "^16.4.5",
     "hono": "^4.4.12",
-    "prisma": "^5.16.2"
+    "prisma": "^5.17.0"
   }
 }
