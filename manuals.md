@@ -26,3 +26,9 @@ prisma/schema.prismaを編集すること
 ```bash
 bunx prisma migrate dev --name init
 ```
+
+# Prismaクライアントの生成
+
+```bash
+bunx prisma generate
+```

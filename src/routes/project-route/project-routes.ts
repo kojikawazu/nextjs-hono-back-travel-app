@@ -1,8 +1,13 @@
 import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client';
+import { 
+    logMessage,
+    errorMessage,
+} from '../../utils/logging/loggingService';
 
 const projects = new Hono();
 const prisma   = new PrismaClient();
+const SOURCE  = 'project-route.ts';
 
 /**
  * プロジェクトを取得する
@@ -12,25 +17,26 @@ const prisma   = new PrismaClient();
  * @returns 404
  */
 projects.get('/:projectId', async (c) => {
-    console.log('[Back] /projects/projectId GET start');
+    logMessage(SOURCE, '/projects/:projectId GET start');
     const { projectId } = c.req.param();
 
     try {
-        console.log('[Back] get project data.');
+        logMessage(SOURCE, 'Prisma getting...');
         const projects = await prisma.project.findUnique({
             include: { user: true },
             where: { id: projectId },
         });
+        logMessage(SOURCE, `isProject? ${projects !== null}`);
 
         if (!projects) {
-            console.error('[Back] Project not found[404]');
+            errorMessage(SOURCE, 'Project not found[404]');
             return c.json({ error: 'Project not found' }, 404);
         }
 
-        console.log('[Back] /projects/projectId GET end');
+        logMessage(SOURCE, '/projects/:projectId GET end');
         return c.json(projects, 200);
     } catch (err) {
-        console.error('[Back] Failed to get project:', err);
+        errorMessage(SOURCE, 'Failed to get project' + err);
         return c.json({ error: 'Failed to fetch projects' }, 500);
     }
 });
@@ -43,25 +49,26 @@ projects.get('/:projectId', async (c) => {
  * @returns 404
  */
 projects.get('/user/:userId', async (c) => {
-    console.log('[Back] /projects/user/:userId GET start');
+    logMessage(SOURCE, '/projects/user/:userId GET start');
     const { userId } = c.req.param();
 
     try {
-        console.log('[Back] get project data list.');
+        logMessage(SOURCE, 'Prisma getting...');
         const projects = await prisma.project.findMany({
             include: { user: true },
             where: { userId },
         });
+        logMessage(SOURCE, `isProject? ${projects !== null}`);
 
         if (!projects) {
-            console.error('[Back] Project not found[404]');
+            errorMessage(SOURCE, 'Project not found[404]');
             return c.json({ error: 'Project not found' }, 404);
         }
 
-        console.log('[Back] /projects/user/:userId GET end');
+        logMessage(SOURCE, '/projects/user/:userId GET end');
         return c.json(projects, 200);
     } catch (err) {
-        console.error('[Back] Failed to get projects:', err);
+        errorMessage(SOURCE, 'Failed to get projects' + err);
         return c.json({ error: 'Failed to fetch projects' }, 500);
     }
 });
@@ -76,7 +83,7 @@ projects.get('/user/:userId', async (c) => {
  * @returns 500
  */
 projects.post('/', async (c) => {
-    console.log('[Back] /projects POST start');
+    logMessage(SOURCE, '/projects POST start');
 
     const {
         name,
@@ -85,13 +92,14 @@ projects.post('/', async (c) => {
     } = await c.req.json();
 
     if (!name || !description || !userId) {
-        console.error('[Back] Invalid request[400]');
+        errorMessage(SOURCE, 'Invalid request[400]');
         return c.json({ error: 'Missing required fields' }, 400);
     }
 
-    console.log('[Back] Valid, OK');
+    logMessage(SOURCE, 'Valid, OK');
 
     try {
+        logMessage(SOURCE, 'Prisma creating...');
         const newProject = await prisma.project.create({
             data: {
                 name,
@@ -99,12 +107,12 @@ projects.post('/', async (c) => {
                 userId,
             },
         });
+        logMessage(SOURCE, 'Prisma created');
 
-        console.log('[Back] Prisma created');
-        console.log('[Back] /projects POST end');
+        logMessage(SOURCE, '/projects POST end');
         return c.json(newProject, 200);
     } catch(err) {
-        console.error('[Back] Failed to add projects:', err);
+        errorMessage(SOURCE, 'Failed to add projects' + err);
         return c.json({ error: 'Failed to add projects' }, 500);
     }
 });
