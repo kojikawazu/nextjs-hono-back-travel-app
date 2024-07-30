@@ -32,3 +32,10 @@ bunx prisma migrate dev --name init
 ```bash
 bunx prisma generate
 ```
+
+# jestの導入
+
+```bash
+npm i ts-jest jest @types/jest @prisma/client --save-dev
+npm i ts-node --save-dev
+```
