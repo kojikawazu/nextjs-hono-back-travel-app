@@ -2,11 +2,12 @@ import { Hono } from 'hono';
 import { 
     logMessage,
     errorMessage,
-} from '../../utils/logging/loggingService';
+} from '../../utils/logging/logging-service';
 import { 
     createTravel,
     getTravelsByUserAndProject,
-} from '../../utils/category/category-services';
+    deleteTravel,
+} from '../../utils/travel/travel-services';
 
 const travels = new Hono();
 const SOURCE  = 'travel-route.ts';
@@ -79,6 +80,23 @@ travels.post('/', async (c) => {
     } catch(err) {
         errorMessage(SOURCE, 'Failed to add travel' + err);
         return c.json({ error: 'Failed to add travel' }, 500);
+    }
+});
+
+travels.delete('/:travelId', async (c) => {
+    logMessage(SOURCE, '/travels/:travelId DELETE start');
+    const { travelId } = c.req.param();
+
+    try {
+        logMessage(SOURCE, 'Prisma deleting...');
+        const deletedTravel = await deleteTravel(travelId);
+        logMessage(SOURCE, `Prisma deleted: ${deletedTravel}`);
+        
+        logMessage(SOURCE, '/travels/:travelId DELETE end');
+        return c.json(deletedTravel, 200);
+    } catch(err) {
+        errorMessage(SOURCE, 'Failed to delete travel' + err);
+        return c.json({ error: 'Failed to delete travel' }, 500);
     }
 });
 

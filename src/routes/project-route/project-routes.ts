@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { 
     logMessage,
     errorMessage,
-} from '../../utils/logging/loggingService';
+} from '../../utils/logging/logging-service';
 
 const projects = new Hono();
 const prisma   = new PrismaClient();
