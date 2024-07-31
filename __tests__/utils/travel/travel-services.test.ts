@@ -1,8 +1,14 @@
 import { PrismaClient } from '@prisma/client';
-import { createTravel, getTravelsByUserAndProject, deleteTravel } from '@/utils/travel/travel-services';
 import { errorMessage } from '@/utils/logging/logging-service';
 import { createParsedDate } from '@/utils/date/date-service';
 import { getOrCreateCategory } from '@/utils/category/category-services';
+import { 
+    createTravel,
+    updateTravel,
+    deleteTravel,
+    getTravelById,
+    getTravelsByUserAndProject, 
+} from '@/utils/travel/travel-services';
 
 // mock
 
@@ -10,8 +16,10 @@ jest.mock('@prisma/client', () => {
     const mPrismaClient = {
         travel: {
             create: jest.fn(),
-            findMany: jest.fn(),
+            update: jest.fn(),
             delete: jest.fn(),
+            findMany: jest.fn(),
+            findUnique: jest.fn(),
         },
     };
     return { PrismaClient: jest.fn(() => mPrismaClient) };
@@ -41,6 +49,7 @@ const prisma = new PrismaClient();
 
 describe('travel-services', () => {
     const travelData = {
+        id: 'travel1',
         name: 'Test Travel',
         description: 'Test Description',
         amount: 100,
@@ -90,26 +99,47 @@ describe('travel-services', () => {
         });
     });
 
-    describe('getTravelsByUserAndProject', () => {
-        test('should return travel data for user and project', async () => {
-            const travelList = [
-                { ...travelData, id: 'travel1', category: { id: 'category1', name: 'Test Category' } },
-            ];
+    describe('updateTravel', () => {
+        test('should update and return travel data', async () => {
+            const parsedDate = new Date(travelData.date);
+            const categoryData = { id: 'category1' };
+            const updatedTravel = { ...travelData, date: parsedDate.toISOString(), categoryId: categoryData.id };
 
-            (prisma.travel.findMany as jest.Mock).mockResolvedValue(travelList);
+            (createParsedDate as jest.Mock).mockResolvedValue(parsedDate);
+            (getOrCreateCategory as jest.Mock).mockResolvedValue(categoryData);
+            (prisma.travel.update as jest.Mock).mockResolvedValue(updatedTravel);
 
-            const result = await getTravelsByUserAndProject(travelData.userId, travelData.projectId);
+            const result = await updateTravel(travelData.id, travelData);
 
-            expect(prisma.travel.findMany).toHaveBeenCalledWith({
+            expect(createParsedDate).toHaveBeenCalledWith(travelData.date);
+            expect(getOrCreateCategory).toHaveBeenCalledWith(travelData.category);
+            expect(prisma.travel.update).toHaveBeenCalledWith({
                 where: {
-                    userId: travelData.userId,
-                    projectId: travelData.projectId,
+                    id: travelData.id,
                 },
-                include: {
-                    category: true,
+                data: {
+                    name: travelData.name,
+                    description: travelData.description,
+                    amount: travelData.amount,
+                    date: parsedDate.toISOString(),
+                    categoryId: categoryData.id,
                 },
             });
-            expect(result).toEqual(travelList);
+            expect(result).toEqual(updatedTravel);
+        });
+
+        test('should throw error if travel data does not exist', async () => {
+            (prisma.travel.update as jest.Mock).mockRejectedValue(new Error('Travel data not found'));
+
+            await expect(updateTravel(travelData.id, travelData)).rejects.toThrow('Travel data not found');
+            expect(errorMessage).toHaveBeenCalledWith('travel-services.ts', 'Failed to update travel: Error: Travel data not found');
+        });
+
+        test('should throw error if date is invalid', async () => {
+            (createParsedDate as jest.Mock).mockResolvedValue(null);
+
+            await expect(updateTravel(travelData.id, travelData)).rejects.toThrow('Invalid date format');
+            expect(errorMessage).toHaveBeenCalledWith('travel-services.ts', 'Invalid date format');
         });
     });
 
@@ -128,6 +158,45 @@ describe('travel-services', () => {
                 },
             });
             expect(result).toEqual(deletedTravel);
+        });
+    });
+
+    describe('getTravelById', () => {
+        test('should return travel data for travelId', async () => {
+            (prisma.travel.findUnique as jest.Mock).mockResolvedValue(travelData);
+
+            const result = await getTravelById(travelData.id);
+
+            expect(prisma.travel.findUnique).toHaveBeenCalledWith({
+                where: {
+                    id: travelData.id,
+                },
+                include: {
+                    category: true,
+                },
+            });
+            expect(result).toEqual(travelData);
+        });
+    });
+
+    describe('getTravelsByUserAndProject', () => {
+        test('should return travel data for user and project', async () => {
+            const travelList = { ...travelData, id: 'travel1', category: { id: 'category1', name: 'Test Category' } };
+
+            (prisma.travel.findMany as jest.Mock).mockResolvedValue(travelList);
+
+            const result = await getTravelsByUserAndProject(travelData.userId, travelData.projectId);
+
+            expect(prisma.travel.findMany).toHaveBeenCalledWith({
+                where: {
+                    userId: travelData.userId,
+                    projectId: travelData.projectId,
+                },
+                include: {
+                    category: true,
+                },
+            });
+            expect(result).toEqual(travelList);
         });
     });
 });

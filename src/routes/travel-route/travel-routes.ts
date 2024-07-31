@@ -5,8 +5,10 @@ import {
 } from '../../utils/logging/logging-service';
 import { 
     createTravel,
-    getTravelsByUserAndProject,
+    updateTravel,
     deleteTravel,
+    getTravelById,
+    getTravelsByUserAndProject,
 } from '../../utils/travel/travel-services';
 
 const travels = new Hono();
@@ -80,6 +82,47 @@ travels.post('/', async (c) => {
     } catch(err) {
         errorMessage(SOURCE, 'Failed to add travel' + err);
         return c.json({ error: 'Failed to add travel' }, 500);
+    }
+});
+
+/**
+ * 旅行データを更新する
+ */
+travels.put('/:travelId', async (c) => {
+    logMessage(SOURCE, '/travels/:travelId PUT start');
+    const { travelId } = c.req.param();
+    const travelData = await c.req.json();
+
+    if (
+        !travelData.name ||
+        !travelData.description ||
+        !travelData.amount ||
+        !travelData.date ||
+        !travelData.category
+    ) {
+        errorMessage(SOURCE, 'Invalid request[400]');
+        return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    logMessage(SOURCE, 'Valid, OK');
+
+    try {
+        logMessage(SOURCE, 'Prisma checking existence...');
+        const existingTravel = await getTravelById(travelId);
+        if (!existingTravel) {
+            errorMessage(SOURCE, 'Travel data not found[404]');
+            return c.json({ error: 'Travel data not found' }, 404);
+        }
+
+        logMessage(SOURCE, 'Prisma updating...');
+        const updatedTravel = await updateTravel(travelId, travelData);
+        logMessage(SOURCE, `Prisma updated: ${updatedTravel}`);
+        
+        logMessage(SOURCE, '/travels PUT end');
+        return c.json(updatedTravel, 200);
+    } catch(err) {
+        errorMessage(SOURCE, 'Failed to update travel' + err);
+        return c.json({ error: 'Failed to update travel' }, 500);
     }
 });
 
