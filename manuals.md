@@ -38,4 +38,6 @@ bunx prisma generate
 ```bash
 npm i ts-jest jest @types/jest @prisma/client --save-dev
 npm i ts-node --save-dev
+npm i supertest --save-dev
+npm i @types/supertest --save-dev
 ```

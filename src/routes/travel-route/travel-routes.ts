@@ -83,6 +83,12 @@ travels.post('/', async (c) => {
     }
 });
 
+/**
+ * 旅行データを削除する
+ * @param travelId 旅行ID
+ * @returns 200(削除した旅行データ)
+ * @returns 500
+ */
 travels.delete('/:travelId', async (c) => {
     logMessage(SOURCE, '/travels/:travelId DELETE start');
     const { travelId } = c.req.param();
