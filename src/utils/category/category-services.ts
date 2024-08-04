@@ -1,10 +1,8 @@
 import { PrismaClient } from '@prisma/client';
-import { 
-    logMessage,
-} from '../logging/logging-service';
+import { logMessage } from '../logging/logging-service';
 
 const prisma = new PrismaClient();
-const SOURCE  = 'category-services.ts';
+const SOURCE = 'category-services.ts';
 
 /**
  * カテゴリを取得または作成する
@@ -13,7 +11,7 @@ const SOURCE  = 'category-services.ts';
  */
 export async function getOrCreateCategory(categoryName: string) {
     logMessage(SOURCE, 'getOrCreateCategory start');
-    
+
     let categoryData = await prisma.category.findFirst({
         where: { name: categoryName },
     });

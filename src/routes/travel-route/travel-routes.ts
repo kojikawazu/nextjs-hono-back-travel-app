@@ -1,9 +1,6 @@
 import { Hono } from 'hono';
-import { 
-    logMessage,
-    errorMessage,
-} from '../../utils/logging/logging-service';
-import { 
+import { logMessage, errorMessage } from '../../utils/logging/logging-service';
+import {
     createTravel,
     updateTravel,
     deleteTravel,
@@ -12,7 +9,7 @@ import {
 } from '../../utils/travel/travel-services';
 
 const travels = new Hono();
-const SOURCE  = 'travel-route.ts';
+const SOURCE = 'travel-route.ts';
 
 /**
  * 旅行データを取得する
@@ -76,10 +73,10 @@ travels.post('/', async (c) => {
         logMessage(SOURCE, 'Prisma creating...');
         const newTravel = await createTravel(travelData);
         logMessage(SOURCE, `Prisma created: ${newTravel}`);
-        
+
         logMessage(SOURCE, '/travels POST end');
         return c.json(newTravel, 200);
-    } catch(err) {
+    } catch (err) {
         errorMessage(SOURCE, 'Failed to add travel' + err);
         return c.json({ error: 'Failed to add travel' }, 500);
     }
@@ -117,10 +114,10 @@ travels.put('/:travelId', async (c) => {
         logMessage(SOURCE, 'Prisma updating...');
         const updatedTravel = await updateTravel(travelId, travelData);
         logMessage(SOURCE, `Prisma updated: ${updatedTravel}`);
-        
+
         logMessage(SOURCE, '/travels PUT end');
         return c.json(updatedTravel, 200);
-    } catch(err) {
+    } catch (err) {
         errorMessage(SOURCE, 'Failed to update travel' + err);
         return c.json({ error: 'Failed to update travel' }, 500);
     }
@@ -140,10 +137,10 @@ travels.delete('/:travelId', async (c) => {
         logMessage(SOURCE, 'Prisma deleting...');
         const deletedTravel = await deleteTravel(travelId);
         logMessage(SOURCE, `Prisma deleted: ${deletedTravel}`);
-        
+
         logMessage(SOURCE, '/travels/:travelId DELETE end');
         return c.json(deletedTravel, 200);
-    } catch(err) {
+    } catch (err) {
         errorMessage(SOURCE, 'Failed to delete travel' + err);
         return c.json({ error: 'Failed to delete travel' }, 500);
     }

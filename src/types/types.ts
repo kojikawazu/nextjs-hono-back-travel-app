@@ -1,4 +1,3 @@
-
 export interface TravelData {
     name: string;
     description: string;
@@ -7,4 +6,4 @@ export interface TravelData {
     category: string;
     userId: string;
     projectId: string;
-};
+}

@@ -2,12 +2,12 @@ import { PrismaClient } from '@prisma/client';
 import { errorMessage } from '@/utils/logging/logging-service';
 import { createParsedDate } from '@/utils/date/date-service';
 import { getOrCreateCategory } from '@/utils/category/category-services';
-import { 
+import {
     createTravel,
     updateTravel,
     deleteTravel,
     getTravelById,
-    getTravelsByUserAndProject, 
+    getTravelsByUserAndProject,
 } from '@/utils/travel/travel-services';
 
 // mock
@@ -67,16 +67,24 @@ describe('travel-services', () => {
         test('should create and return new travel data', async () => {
             const parsedDate = new Date(travelData.date);
             const categoryData = { id: 'category1' };
-            const createdTravel = { ...travelData, date: parsedDate.toISOString(), categoryId: categoryData.id };
+            const createdTravel = {
+                ...travelData,
+                date: parsedDate.toISOString(),
+                categoryId: categoryData.id,
+            };
 
             (createParsedDate as jest.Mock).mockResolvedValue(parsedDate);
             (getOrCreateCategory as jest.Mock).mockResolvedValue(categoryData);
-            (prisma.travel.create as jest.Mock).mockResolvedValue(createdTravel);
+            (prisma.travel.create as jest.Mock).mockResolvedValue(
+                createdTravel
+            );
 
             const result = await createTravel(travelData);
 
             expect(createParsedDate).toHaveBeenCalledWith(travelData.date);
-            expect(getOrCreateCategory).toHaveBeenCalledWith(travelData.category);
+            expect(getOrCreateCategory).toHaveBeenCalledWith(
+                travelData.category
+            );
             expect(prisma.travel.create).toHaveBeenCalledWith({
                 data: {
                     name: travelData.name,
@@ -94,8 +102,13 @@ describe('travel-services', () => {
         test('should throw error if date is invalid', async () => {
             (createParsedDate as jest.Mock).mockResolvedValue(null);
 
-            await expect(createTravel(travelData)).rejects.toThrow('Invalid date format');
-            expect(errorMessage).toHaveBeenCalledWith('travel-services.ts', 'Invalid date format');
+            await expect(createTravel(travelData)).rejects.toThrow(
+                'Invalid date format'
+            );
+            expect(errorMessage).toHaveBeenCalledWith(
+                'travel-services.ts',
+                'Invalid date format'
+            );
         });
     });
 
@@ -103,16 +116,24 @@ describe('travel-services', () => {
         test('should update and return travel data', async () => {
             const parsedDate = new Date(travelData.date);
             const categoryData = { id: 'category1' };
-            const updatedTravel = { ...travelData, date: parsedDate.toISOString(), categoryId: categoryData.id };
+            const updatedTravel = {
+                ...travelData,
+                date: parsedDate.toISOString(),
+                categoryId: categoryData.id,
+            };
 
             (createParsedDate as jest.Mock).mockResolvedValue(parsedDate);
             (getOrCreateCategory as jest.Mock).mockResolvedValue(categoryData);
-            (prisma.travel.update as jest.Mock).mockResolvedValue(updatedTravel);
+            (prisma.travel.update as jest.Mock).mockResolvedValue(
+                updatedTravel
+            );
 
             const result = await updateTravel(travelData.id, travelData);
 
             expect(createParsedDate).toHaveBeenCalledWith(travelData.date);
-            expect(getOrCreateCategory).toHaveBeenCalledWith(travelData.category);
+            expect(getOrCreateCategory).toHaveBeenCalledWith(
+                travelData.category
+            );
             expect(prisma.travel.update).toHaveBeenCalledWith({
                 where: {
                     id: travelData.id,
@@ -129,17 +150,29 @@ describe('travel-services', () => {
         });
 
         test('should throw error if travel data does not exist', async () => {
-            (prisma.travel.update as jest.Mock).mockRejectedValue(new Error('Travel data not found'));
+            (prisma.travel.update as jest.Mock).mockRejectedValue(
+                new Error('Travel data not found')
+            );
 
-            await expect(updateTravel(travelData.id, travelData)).rejects.toThrow('Travel data not found');
-            expect(errorMessage).toHaveBeenCalledWith('travel-services.ts', 'Failed to update travel: Error: Travel data not found');
+            await expect(
+                updateTravel(travelData.id, travelData)
+            ).rejects.toThrow('Travel data not found');
+            expect(errorMessage).toHaveBeenCalledWith(
+                'travel-services.ts',
+                'Failed to update travel: Error: Travel data not found'
+            );
         });
 
         test('should throw error if date is invalid', async () => {
             (createParsedDate as jest.Mock).mockResolvedValue(null);
 
-            await expect(updateTravel(travelData.id, travelData)).rejects.toThrow('Invalid date format');
-            expect(errorMessage).toHaveBeenCalledWith('travel-services.ts', 'Invalid date format');
+            await expect(
+                updateTravel(travelData.id, travelData)
+            ).rejects.toThrow('Invalid date format');
+            expect(errorMessage).toHaveBeenCalledWith(
+                'travel-services.ts',
+                'Invalid date format'
+            );
         });
     });
 
@@ -148,7 +181,9 @@ describe('travel-services', () => {
             const travelId = 'travel1';
             const deletedTravel = { ...travelData, id: travelId };
 
-            (prisma.travel.delete as jest.Mock).mockResolvedValue(deletedTravel);
+            (prisma.travel.delete as jest.Mock).mockResolvedValue(
+                deletedTravel
+            );
 
             const result = await deleteTravel(travelId);
 
@@ -163,7 +198,9 @@ describe('travel-services', () => {
 
     describe('getTravelById', () => {
         test('should return travel data for travelId', async () => {
-            (prisma.travel.findUnique as jest.Mock).mockResolvedValue(travelData);
+            (prisma.travel.findUnique as jest.Mock).mockResolvedValue(
+                travelData
+            );
 
             const result = await getTravelById(travelData.id);
 
@@ -181,11 +218,18 @@ describe('travel-services', () => {
 
     describe('getTravelsByUserAndProject', () => {
         test('should return travel data for user and project', async () => {
-            const travelList = { ...travelData, id: 'travel1', category: { id: 'category1', name: 'Test Category' } };
+            const travelList = {
+                ...travelData,
+                id: 'travel1',
+                category: { id: 'category1', name: 'Test Category' },
+            };
 
             (prisma.travel.findMany as jest.Mock).mockResolvedValue(travelList);
 
-            const result = await getTravelsByUserAndProject(travelData.userId, travelData.projectId);
+            const result = await getTravelsByUserAndProject(
+                travelData.userId,
+                travelData.projectId
+            );
 
             expect(prisma.travel.findMany).toHaveBeenCalledWith({
                 where: {
