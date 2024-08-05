@@ -8,4 +8,4 @@ export const config = {
     supabaseUrl: process.env.SUPABASE_URL as string,
     supabaseKey: process.env.SUPABASE_KEY as string,
     databaseUrl: process.env.DATABASE_URL as string,
-}
+};

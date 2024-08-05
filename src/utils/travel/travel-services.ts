@@ -1,14 +1,11 @@
 import { PrismaClient } from '@prisma/client';
-import { 
-    logMessage,
-    errorMessage,
-} from '../logging/logging-service';
+import { logMessage, errorMessage } from '../logging/logging-service';
 import type { TravelData } from '../../types/types';
 import { createParsedDate } from '../date/date-service';
 import { getOrCreateCategory } from '../category/category-services';
 
 const prisma = new PrismaClient();
-const SOURCE  = 'travel-services.ts';
+const SOURCE = 'travel-services.ts';
 
 /**
  * 旅行データを追加する
@@ -28,7 +25,7 @@ export async function createTravel(travelData: TravelData) {
     logMessage(SOURCE, 'Getting or creating category...');
     const categoryData = await getOrCreateCategory(travelData.category);
     logMessage(SOURCE, `Category data: ${categoryData}`);
-  
+
     return await prisma.travel.create({
         data: {
             name: travelData.name,
@@ -61,7 +58,7 @@ export async function updateTravel(travelId: string, travelData: TravelData) {
     logMessage(SOURCE, 'Getting or creating category...');
     const categoryData = await getOrCreateCategory(travelData.category);
     logMessage(SOURCE, `Category data: ${categoryData}`);
-  
+
     try {
         const updatedTravel = await prisma.travel.update({
             where: {
@@ -123,7 +120,10 @@ export async function getTravelById(travelId: string) {
  * @param projectId プロジェクトID
  * @returns 旅行データのリスト
  */
-export async function getTravelsByUserAndProject(userId: string, projectId: string) {
+export async function getTravelsByUserAndProject(
+    userId: string,
+    projectId: string
+) {
     logMessage(SOURCE, 'getTravelsByUserAndProject start');
 
     return await prisma.travel.findMany({

@@ -19,12 +19,16 @@ describe('loggingService', () => {
     test('logMessage should log correct message', () => {
         logMessage(source, message);
 
-        expect(console.log).toHaveBeenCalledWith('[Back] [testSource] testMessage');
+        expect(console.log).toHaveBeenCalledWith(
+            '[Back] [testSource] testMessage'
+        );
     });
 
     test('errorMessage should log correct error message', () => {
         errorMessage(source, message);
 
-        expect(console.error).toHaveBeenCalledWith('[Back] [testSource] testMessage');
+        expect(console.error).toHaveBeenCalledWith(
+            '[Back] [testSource] testMessage'
+        );
     });
 });

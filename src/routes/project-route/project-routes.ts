@@ -1,13 +1,10 @@
 import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client';
-import { 
-    logMessage,
-    errorMessage,
-} from '../../utils/logging/logging-service';
+import { logMessage, errorMessage } from '../../utils/logging/logging-service';
 
 const projects = new Hono();
-const prisma   = new PrismaClient();
-const SOURCE  = 'project-route.ts';
+const prisma = new PrismaClient();
+const SOURCE = 'project-route.ts';
 
 /**
  * プロジェクトを取得する
@@ -85,11 +82,7 @@ projects.get('/user/:userId', async (c) => {
 projects.post('/', async (c) => {
     logMessage(SOURCE, '/projects POST start');
 
-    const {
-        name,
-        description,
-        userId,
-    } = await c.req.json();
+    const { name, description, userId } = await c.req.json();
 
     if (!name || !description || !userId) {
         errorMessage(SOURCE, 'Invalid request[400]');
@@ -111,7 +104,7 @@ projects.post('/', async (c) => {
 
         logMessage(SOURCE, '/projects POST end');
         return c.json(newProject, 200);
-    } catch(err) {
+    } catch (err) {
         errorMessage(SOURCE, 'Failed to add projects' + err);
         return c.json({ error: 'Failed to add projects' }, 500);
     }

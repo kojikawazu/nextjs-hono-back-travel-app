@@ -34,7 +34,9 @@ describe('getOrCreateCategory', () => {
         const categoryName = 'TestCategory';
         const mockCategory = { id: 1, name: categoryName };
 
-        (prisma.category.findFirst as jest.Mock).mockResolvedValue(mockCategory);
+        (prisma.category.findFirst as jest.Mock).mockResolvedValue(
+            mockCategory
+        );
 
         const result = await getOrCreateCategory(categoryName);
 
@@ -42,9 +44,18 @@ describe('getOrCreateCategory', () => {
             where: { name: categoryName },
         });
         expect(result).toEqual(mockCategory);
-        expect(logMessage).toHaveBeenCalledWith('category-services.ts', 'getOrCreateCategory start');
-        expect(logMessage).toHaveBeenCalledWith('category-services.ts', `Category data: ${mockCategory}`);
-        expect(logMessage).toHaveBeenCalledWith('category-services.ts', 'getOrCreateCategory end');
+        expect(logMessage).toHaveBeenCalledWith(
+            'category-services.ts',
+            'getOrCreateCategory start'
+        );
+        expect(logMessage).toHaveBeenCalledWith(
+            'category-services.ts',
+            `Category data: ${mockCategory}`
+        );
+        expect(logMessage).toHaveBeenCalledWith(
+            'category-services.ts',
+            'getOrCreateCategory end'
+        );
     });
 
     test('should create a new category if not found', async () => {
@@ -63,9 +74,21 @@ describe('getOrCreateCategory', () => {
             data: { name: categoryName },
         });
         expect(result).toEqual(newCategory);
-        expect(logMessage).toHaveBeenCalledWith('category-services.ts', 'getOrCreateCategory start');
-        expect(logMessage).toHaveBeenCalledWith('category-services.ts', `Category NewCategory not found, creating...`);
-        expect(logMessage).toHaveBeenCalledWith('category-services.ts', `Category created: ${newCategory}`);
-        expect(logMessage).toHaveBeenCalledWith('category-services.ts', 'getOrCreateCategory end');
+        expect(logMessage).toHaveBeenCalledWith(
+            'category-services.ts',
+            'getOrCreateCategory start'
+        );
+        expect(logMessage).toHaveBeenCalledWith(
+            'category-services.ts',
+            `Category NewCategory not found, creating...`
+        );
+        expect(logMessage).toHaveBeenCalledWith(
+            'category-services.ts',
+            `Category created: ${newCategory}`
+        );
+        expect(logMessage).toHaveBeenCalledWith(
+            'category-services.ts',
+            'getOrCreateCategory end'
+        );
     });
 });
