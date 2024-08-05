@@ -1,4 +1,3 @@
-
 # Honoバックエンドプロジェクトのセットアップ
 
 ```bash
@@ -31,6 +30,18 @@ bunx prisma migrate dev --name init
 
 ```bash
 bunx prisma generate
+```
+
+# prettierの導入
+
+```bash
+bun add -d prettier
+```
+
+# eslintの導入
+
+```bash
+bun add -d eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin eslint-plugin-prettier
 ```
 
 # jestの導入
