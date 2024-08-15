@@ -110,4 +110,40 @@ projects.post('/', async (c) => {
     }
 });
 
+/**
+ * 複数のプロジェクトを削除する
+ * @params ids プロジェクトIDリスト
+ * @returns 200(追加したプロジェクトデータ)
+ * @returns 400
+ * @returns 500
+ */
+projects.post('/delete', async (c) => {
+    logMessage(SOURCE, '/projects/delete POST start');
+
+    const { ids } = await c.req.json<{ids: string[]}>();
+
+    if (!ids || ids.length === 0) {
+        errorMessage(SOURCE, 'No projects selected[400]');
+        return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    logMessage(SOURCE, 'Valid, OK');
+
+    try {
+        logMessage(SOURCE, 'Prisma deleting...');
+        const deletedProjects = await prisma.project.deleteMany({
+            where: {
+                id: { in: ids },
+            },
+        });
+        logMessage(SOURCE, 'Prisma deleted');
+
+        logMessage(SOURCE, '/projects/delete POST end');
+        return c.json(deletedProjects, 200);
+    } catch (err) {
+        errorMessage(SOURCE, 'Failed to delete projects' + err);
+        return c.json({ error: 'Failed to delete projects' }, 500);
+    }
+});
+
 export default projects;
