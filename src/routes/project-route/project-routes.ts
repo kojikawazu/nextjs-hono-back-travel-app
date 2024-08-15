@@ -1,6 +1,11 @@
 import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client';
 import { logMessage, errorMessage } from '../../utils/logging/logging-service';
+import {
+    getProjectById,
+    updateProject,
+    deleteProjects,
+} from '@/utils/project/project-services';
 
 const projects = new Hono();
 const prisma = new PrismaClient();
@@ -111,16 +116,57 @@ projects.post('/', async (c) => {
 });
 
 /**
+ * プロジェクトデータを更新する
+ * @param name プロジェクト名
+ * @param description プロジェクト説明
+ * @returns 200(更新したプロジェクトデータ)
+ * @returns 400
+ * @returns 404
+ * @returns 500
+ */
+projects.put('/:projectId', async (c) => {
+    logMessage(SOURCE, '/projects/:projectId PUT start');
+    const { projectId } = c.req.param();
+    const projectData = await c.req.json();
+
+    if (!projectData.name || !projectData.description) {
+        errorMessage(SOURCE, 'Invalid request[400]');
+        return c.json({ error: 'Missing required fields' }, 400);
+    }
+
+    logMessage(SOURCE, 'Valid, OK');
+
+    try {
+        logMessage(SOURCE, 'Prisma checking existence...');
+        const existingProject = await getProjectById(projectId);
+        if (!existingProject) {
+            errorMessage(SOURCE, 'Project data not found[404]');
+            return c.json({ error: 'Project data not found' }, 404);
+        }
+
+        logMessage(SOURCE, 'Prisma updating...');
+        const updatedProject = await updateProject(projectId, projectData);
+        logMessage(SOURCE, `Prisma updated: ${updatedProject}`);
+
+        logMessage(SOURCE, '/projects/:projectId PUT end');
+        return c.json(updatedProject, 200);
+    } catch (err) {
+        errorMessage(SOURCE, 'Failed to update project' + err);
+        return c.json({ error: 'Failed to update project' }, 500);
+    }
+});
+
+/**
  * 複数のプロジェクトを削除する
  * @params ids プロジェクトIDリスト
- * @returns 200(追加したプロジェクトデータ)
+ * @returns 200(削除したプロジェクトデータ)
  * @returns 400
  * @returns 500
  */
 projects.post('/delete', async (c) => {
     logMessage(SOURCE, '/projects/delete POST start');
 
-    const { ids } = await c.req.json<{ids: string[]}>();
+    const { ids } = await c.req.json<{ ids: string[] }>();
 
     if (!ids || ids.length === 0) {
         errorMessage(SOURCE, 'No projects selected[400]');
@@ -131,11 +177,7 @@ projects.post('/delete', async (c) => {
 
     try {
         logMessage(SOURCE, 'Prisma deleting...');
-        const deletedProjects = await prisma.project.deleteMany({
-            where: {
-                id: { in: ids },
-            },
-        });
+        const deletedProjects = await deleteProjects(ids);
         logMessage(SOURCE, 'Prisma deleted');
 
         logMessage(SOURCE, '/projects/delete POST end');
