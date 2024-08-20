@@ -1,11 +1,16 @@
 import { Hono } from 'hono';
 import { logMessage, errorMessage } from '../../utils/logging/logging-service';
+import type {
+    GroupedTravelData,
+    GroupedTravelDataWithYear,
+} from '../../types/types';
 import {
     createTravel,
     updateTravel,
     deleteTravel,
     getTravelById,
     getTravelsByUserAndProject,
+    getTravelsByUserGroupedByPeriod,
 } from '../../utils/travel/travel-services';
 
 const travels = new Hono();
@@ -143,6 +148,42 @@ travels.delete('/:travelId', async (c) => {
     } catch (err) {
         errorMessage(SOURCE, 'Failed to delete travel' + err);
         return c.json({ error: 'Failed to delete travel' }, 500);
+    }
+});
+
+/**
+ * 指定した期間でグループ化された旅行データを取得する
+ * @param userId ユーザーID
+ * @returns 200(グループ化された旅行データ)
+ * @returns 400
+ * @returns 404
+ * @returns 500
+ */
+travels.get('/:userId/grouped/:period', async (c) => {
+    logMessage(SOURCE, '/travels/:userId:/grouped/:period GET start');
+    const { userId, period } = c.req.param();
+
+    if (!['year', 'month', 'week'].includes(period)) {
+        errorMessage(SOURCE, 'Invalid request[400]');
+        return c.json({ error: 'Invalid period' }, 400);
+    }
+
+    try {
+        const periodType = period as 'year' | 'month' | 'week';
+
+        logMessage(SOURCE, 'Prisma getting grouped travels...');
+        const groupedTravels:
+            | GroupedTravelData[]
+            | GroupedTravelDataWithYear[] =
+            await getTravelsByUserGroupedByPeriod(userId, periodType);
+        logMessage(SOURCE, `isTravel? ${groupedTravels !== null}`);
+        logMessage(SOURCE, 'Prisma got');
+
+        logMessage(SOURCE, '/travels/:userId:/grouped/:period GET end');
+        return c.json(groupedTravels, 200);
+    } catch (err) {
+        errorMessage(SOURCE, 'Failed to get grouped travels' + err);
+        return c.json({ error: 'Failed to get grouped travels' }, 500);
     }
 });
 

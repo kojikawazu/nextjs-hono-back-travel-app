@@ -8,6 +8,7 @@ import {
     deleteTravel,
     getTravelById,
     getTravelsByUserAndProject,
+    getTravelsByUserGroupedByPeriod,
 } from '@/utils/travel/travel-services';
 
 // mock
@@ -21,6 +22,8 @@ jest.mock('@prisma/client', () => {
             findMany: jest.fn(),
             findUnique: jest.fn(),
         },
+        $queryRaw: jest.fn(),
+        $queryRawUnsafe: jest.fn(),
     };
     return { PrismaClient: jest.fn(() => mPrismaClient) };
 });
@@ -41,11 +44,6 @@ jest.mock('@/utils/category/category-services', () => ({
 // instance
 
 const prisma = new PrismaClient();
-
-// ・新しい旅行データを作成して返すこと
-// ・日付が無効な場合はエラーをスローすること
-// ・ユーザーとプロジェクトに関連する旅行データを返すこと
-// ・旅行データを削除すること
 
 describe('travel-services', () => {
     const travelData = {
@@ -241,6 +239,103 @@ describe('travel-services', () => {
                 },
             });
             expect(result).toEqual(travelList);
+        });
+    });
+
+    describe('getTravelsByUserGroupedByPeriod', () => {
+        const mockTravels = [
+            { period_key: 2023, travel_count: 2, total_amount: 300 },
+            { period_key: 2024, travel_count: 1, total_amount: 150 },
+        ];
+
+        test('should return travels grouped by year', async () => {
+            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue(
+                mockTravels
+            );
+
+            const result = await getTravelsByUserGroupedByPeriod(
+                'user1',
+                'year'
+            );
+
+            const calls = (prisma.$queryRawUnsafe as jest.Mock).mock.calls;
+
+            expect(calls[0][1]).toBe('user1');
+            expect(result).toEqual(mockTravels);
+        });
+
+        test('should return travels grouped by month', async () => {
+            const mockMonthlyTravels = [
+                {
+                    year: 2023,
+                    period_key: 7,
+                    travel_count: 1,
+                    total_amount: 100,
+                },
+                {
+                    year: 2023,
+                    period_key: 8,
+                    travel_count: 2,
+                    total_amount: 200,
+                },
+            ];
+            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue(
+                mockMonthlyTravels
+            );
+
+            const result = await getTravelsByUserGroupedByPeriod(
+                'user1',
+                'month'
+            );
+
+            const calls = (prisma.$queryRawUnsafe as jest.Mock).mock.calls;
+
+            expect(calls[0][1]).toBe('user1');
+            expect(result).toEqual(mockMonthlyTravels);
+        });
+
+        test('should return travels grouped by week', async () => {
+            const mockWeeklyTravels = [
+                {
+                    year: 2023,
+                    period_key: 30,
+                    travel_count: 1,
+                    total_amount: 100,
+                },
+                {
+                    year: 2023,
+                    period_key: 31,
+                    travel_count: 2,
+                    total_amount: 200,
+                },
+            ];
+            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue(
+                mockWeeklyTravels
+            );
+
+            const result = await getTravelsByUserGroupedByPeriod(
+                'user1',
+                'week'
+            );
+
+            const calls = (prisma.$queryRawUnsafe as jest.Mock).mock.calls;
+
+            expect(calls[0][1]).toBe('user1');
+            expect(result).toEqual(mockWeeklyTravels);
+        });
+
+        test('should throw error if invalid period is specified', async () => {
+            await expect(
+                getTravelsByUserGroupedByPeriod(
+                    'user1',
+                    'invalid_period' as unknown as 'year' | 'month' | 'week'
+                )
+            ).rejects.toThrow('Invalid period specified');
+
+            expect(errorMessage).toHaveBeenCalledWith(
+                'travel-services.ts',
+                'Invalid period specified'
+            );
         });
     });
 });
