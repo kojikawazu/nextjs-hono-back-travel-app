@@ -11,6 +11,7 @@ import {
     getTravelById,
     getTravelsByUserAndProject,
     getTravelsByUserGroupedByPeriod,
+    getTravelsByUserAndProjectGroupedByPeriod,
 } from '../../utils/travel/travel-services';
 
 const travels = new Hono();
@@ -180,6 +181,43 @@ travels.get('/:userId/grouped/:period', async (c) => {
         logMessage(SOURCE, 'Prisma got');
 
         logMessage(SOURCE, '/travels/:userId:/grouped/:period GET end');
+        return c.json(groupedTravels, 200);
+    } catch (err) {
+        errorMessage(SOURCE, 'Failed to get grouped travels' + err);
+        return c.json({ error: 'Failed to get grouped travels' }, 500);
+    }
+});
+
+/**
+ * 指定した期間でグループ化された旅行データを取得する
+ * @param userId ユーザーID
+ * @param projectId プロジェクトID
+ * @returns 200(グループ化された旅行データ)
+ * @returns 400
+ * @returns 404
+ * @returns 500
+ */
+travels.get('/:userId/:projectId/grouped/:period', async (c) => {
+    logMessage(SOURCE, '/travels/:userId:/:projectId/grouped/:period GET start');
+    const { userId, projectId, period } = c.req.param();
+
+    if (!['year', 'month', 'week'].includes(period)) {
+        errorMessage(SOURCE, 'Invalid request[400]');
+        return c.json({ error: 'Invalid period' }, 400);
+    }
+
+    try {
+        const periodType = period as 'year' | 'month' | 'week';
+
+        logMessage(SOURCE, 'Prisma getting grouped travels...');
+        const groupedTravels:
+            | GroupedTravelData[]
+            | GroupedTravelDataWithYear[] =
+            await getTravelsByUserAndProjectGroupedByPeriod(userId, projectId, periodType);
+        logMessage(SOURCE, `isTravel? ${groupedTravels !== null}`);
+        logMessage(SOURCE, 'Prisma got');
+
+        logMessage(SOURCE, '/travels/:userId:/:projectId/grouped/:period GET end');
         return c.json(groupedTravels, 200);
     } catch (err) {
         errorMessage(SOURCE, 'Failed to get grouped travels' + err);
