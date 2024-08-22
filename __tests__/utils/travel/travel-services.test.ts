@@ -9,6 +9,7 @@ import {
     getTravelById,
     getTravelsByUserAndProject,
     getTravelsByUserGroupedByPeriod,
+    getTravelsByUserAndProjectGroupedByPeriod,
 } from '@/utils/travel/travel-services';
 
 // mock
@@ -328,6 +329,110 @@ describe('travel-services', () => {
             await expect(
                 getTravelsByUserGroupedByPeriod(
                     'user1',
+                    'invalid_period' as unknown as 'year' | 'month' | 'week'
+                )
+            ).rejects.toThrow('Invalid period specified');
+
+            expect(errorMessage).toHaveBeenCalledWith(
+                'travel-services.ts',
+                'Invalid period specified'
+            );
+        });
+    });
+
+    describe('getTravelsByUserAndProjectGroupedByPeriod', () => {
+        const mockTravels = [
+            { period_key: 2023, travel_count: 2, total_amount: 300 },
+            { period_key: 2024, travel_count: 1, total_amount: 150 },
+        ];
+
+        test('should return travels grouped by year', async () => {
+            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue(
+                mockTravels
+            );
+
+            const result = await getTravelsByUserAndProjectGroupedByPeriod(
+                'user1',
+                'project1',
+                'year'
+            );
+
+            const calls = (prisma.$queryRawUnsafe as jest.Mock).mock.calls;
+
+            expect(calls[0][1]).toBe('user1');
+            expect(calls[0][2]).toBe('project1');
+            expect(result).toEqual(mockTravels);
+        });
+
+        test('should return travels grouped by month', async () => {
+            const mockMonthlyTravels = [
+                {
+                    year: 2023,
+                    period_key: 7,
+                    travel_count: 1,
+                    total_amount: 100,
+                },
+                {
+                    year: 2023,
+                    period_key: 8,
+                    travel_count: 2,
+                    total_amount: 200,
+                },
+            ];
+            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue(
+                mockMonthlyTravels
+            );
+
+            const result = await getTravelsByUserAndProjectGroupedByPeriod(
+                'user1',
+                'project1',
+                'month'
+            );
+
+            const calls = (prisma.$queryRawUnsafe as jest.Mock).mock.calls;
+
+            expect(calls[0][1]).toBe('user1');
+            expect(calls[0][2]).toBe('project1');
+            expect(result).toEqual(mockMonthlyTravels);
+        });
+
+        test('should return travels grouped by week', async () => {
+            const mockWeeklyTravels = [
+                {
+                    year: 2023,
+                    period_key: 30,
+                    travel_count: 1,
+                    total_amount: 100,
+                },
+                {
+                    year: 2023,
+                    period_key: 31,
+                    travel_count: 2,
+                    total_amount: 200,
+                },
+            ];
+            (prisma.$queryRawUnsafe as jest.Mock).mockResolvedValue(
+                mockWeeklyTravels
+            );
+
+            const result = await getTravelsByUserAndProjectGroupedByPeriod(
+                'user1',
+                'project1',
+                'week'
+            );
+
+            const calls = (prisma.$queryRawUnsafe as jest.Mock).mock.calls;
+
+            expect(calls[0][1]).toBe('user1');
+            expect(calls[0][2]).toBe('project1');
+            expect(result).toEqual(mockWeeklyTravels);
+        });
+
+        test('should throw error if invalid period is specified', async () => {
+            await expect(
+                getTravelsByUserAndProjectGroupedByPeriod(
+                    'user1',
+                    'project1',
                     'invalid_period' as unknown as 'year' | 'month' | 'week'
                 )
             ).rejects.toThrow('Invalid period specified');

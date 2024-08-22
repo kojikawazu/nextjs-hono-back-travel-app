@@ -194,3 +194,59 @@ export async function getTravelsByUserGroupedByPeriod(
             travel.total_amount !== null ? Number(travel.total_amount) : null,
     }));
 }
+
+/**
+ * 指定された期間でユーザーとプロジェクトごとの旅行データを取得する
+ * @param userId ユーザーID
+ * @param projectId プロジェクトID
+ * @param period 'year' | 'month' | 'week' どの期間でグループ化するか
+ * @returns グループ化された旅行データのリスト
+ */
+export async function getTravelsByUserAndProjectGroupedByPeriod(
+    userId: string,
+    projectId: string,
+    period: 'year' | 'month' | 'week'
+): Promise<GroupedTravelData[] | GroupedTravelDataWithYear[]> {
+    logMessage(SOURCE, 'getTravelsByUserAndProjectGroupedByPeriod start');
+    logMessage(SOURCE, `Period: ${period}`);
+
+    let groupByClause: string;
+    let selectClause: string;
+
+    if (period === 'year') {
+        groupByClause = `EXTRACT(YEAR FROM date)`;
+        selectClause = `EXTRACT(YEAR FROM date) AS period_key`;
+    } else if (period === 'month') {
+        groupByClause = `EXTRACT(YEAR FROM date), EXTRACT(MONTH FROM date)`;
+        selectClause = `EXTRACT(YEAR FROM date) AS year, EXTRACT(MONTH FROM date) AS period_key`;
+    } else if (period === 'week') {
+        groupByClause = `EXTRACT(YEAR FROM date), EXTRACT(WEEK FROM date)`;
+        selectClause = `EXTRACT(YEAR FROM date) AS year, EXTRACT(WEEK FROM date) AS period_key`;
+    } else {
+        errorMessage(SOURCE, 'Invalid period specified');
+        throw new Error('Invalid period specified');
+    }
+
+    const query = `
+        SELECT ${selectClause}, COUNT(*)::int AS travel_count, SUM(amount)::numeric::int AS total_amount
+        FROM "Travel"
+        WHERE "userId" = $1 AND "projectId" = $2
+        GROUP BY ${groupByClause}
+        ORDER BY ${groupByClause} ASC;
+    `;
+
+    const travels = await prisma.$queryRawUnsafe<
+        GroupedTravelData[] | GroupedTravelDataWithYear[]
+    >(query, userId, projectId);
+
+    return travels.map((travel) => ({
+        ...travel,
+        ...(travel.hasOwnProperty('year') && {
+            year: Number((travel as GroupedTravelDataWithYear).year),
+        }),
+        period_key: Number(travel.period_key),
+        travel_count: Number(travel.travel_count),
+        total_amount:
+            travel.total_amount !== null ? Number(travel.total_amount) : null,
+    }));
+}
