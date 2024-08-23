@@ -10,6 +10,7 @@ import {
     getTravelsByUserAndProject,
     getTravelsByUserGroupedByPeriod,
     getTravelsByUserAndProjectGroupedByPeriod,
+    getTravelsByUserAndMonth,
 } from '@/utils/travel/travel-services';
 
 // mock
@@ -441,6 +442,94 @@ describe('travel-services', () => {
                 'travel-services.ts',
                 'Invalid period specified'
             );
+        });
+    });
+
+    describe('getTravelsByUserAndMonth', () => {
+        beforeEach(() => {
+            jest.clearAllMocks();
+        });
+
+        const mockTravels = [
+            {
+                id: 'travel1',
+                name: 'Test Travel 1',
+                description: 'Test Description 1',
+                amount: 1000,
+                date: new Date('2024-01-05'),
+                userId: 'user1',
+                projectId: 'project1',
+                category: { id: 'category1', name: 'Test Category' },
+            },
+            {
+                id: 'travel2',
+                name: 'Test Travel 2',
+                description: 'Test Description 2',
+                amount: 2000,
+                date: new Date('2024-01-15'),
+                userId: 'user1',
+                projectId: 'project1',
+                category: { id: 'category2', name: 'Another Category' },
+            },
+        ];
+
+        test('should return travel data for the specified user and month', async () => {
+            (prisma.travel.findMany as jest.Mock).mockResolvedValue(
+                mockTravels
+            );
+
+            const result = await getTravelsByUserAndMonth('user1', '2024年1月');
+
+            expect(prisma.travel.findMany).toHaveBeenCalledWith({
+                where: {
+                    userId: 'user1',
+                    date: {
+                        gte: new Date(2024, 0, 1),
+                        lte: new Date(2024, 0, 31, 23, 59, 59, 999),
+                    },
+                },
+                include: {
+                    category: true,
+                },
+            });
+            expect(result).toEqual(mockTravels);
+        });
+
+        test('should return an empty array if no travels are found', async () => {
+            (prisma.travel.findMany as jest.Mock).mockResolvedValue([]);
+
+            const result = await getTravelsByUserAndMonth('user1', '2024年1月');
+
+            expect(prisma.travel.findMany).toHaveBeenCalledWith({
+                where: {
+                    userId: 'user1',
+                    date: {
+                        gte: new Date(2024, 0, 1),
+                        lte: new Date(2024, 0, 31, 23, 59, 59, 999),
+                    },
+                },
+                include: {
+                    category: true,
+                },
+            });
+            expect(result).toEqual([]);
+        });
+
+        test('should handle invalid month format', async () => {
+            await expect(
+                getTravelsByUserAndMonth('user1', 'invalid-month')
+            ).rejects.toThrow('Invalid date format');
+            expect(prisma.travel.findMany).not.toHaveBeenCalled();
+        });
+
+        test('should throw an error if Prisma call fails', async () => {
+            (prisma.travel.findMany as jest.Mock).mockRejectedValue(
+                new Error('Prisma error')
+            );
+
+            await expect(
+                getTravelsByUserAndMonth('user1', '2024年1月')
+            ).rejects.toThrow('Prisma error');
         });
     });
 });
