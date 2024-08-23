@@ -250,3 +250,40 @@ export async function getTravelsByUserAndProjectGroupedByPeriod(
             travel.total_amount !== null ? Number(travel.total_amount) : null,
     }));
 }
+
+/**
+ * 日付とユーザーIDで旅行データを取得する
+ * @param userId ユーザーID
+ * @param month 月
+ * @returns 旅行データ
+ */
+export async function getTravelsByUserAndMonth(userId: string, month: string) {
+    logMessage(SOURCE, 'getTravelsByUserAndMonth start');
+    logMessage(SOURCE, `userId: ${userId} month: ${month}`);
+
+    // 正規表現で年と月を取得
+    const match = month.match(/\d+/g);
+    if (!match || match.length !== 2) {
+        throw new Error('Invalid date format');
+    }
+
+    const [year, monthStr] = month.match(/\d+/g)!.map(Number);
+    const startDate = new Date(year, monthStr - 1, 1); // 月は0から始まるので -1
+    const endDate = new Date(year, monthStr, 0, 23, 59, 59, 999); // 次の月の0日目は前月の最後の日
+
+    // 指定された月の旅行データを取得
+    const travels = await prisma.travel.findMany({
+        where: {
+            userId: userId,
+            date: {
+                gte: startDate,
+                lte: endDate,
+            },
+        },
+        include: {
+            category: true,
+        },
+    });
+
+    return travels;
+}

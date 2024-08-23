@@ -198,7 +198,10 @@ travels.get('/:userId/grouped/:period', async (c) => {
  * @returns 500
  */
 travels.get('/:userId/:projectId/grouped/:period', async (c) => {
-    logMessage(SOURCE, '/travels/:userId:/:projectId/grouped/:period GET start');
+    logMessage(
+        SOURCE,
+        '/travels/:userId:/:projectId/grouped/:period GET start'
+    );
     const { userId, projectId, period } = c.req.param();
 
     if (!['year', 'month', 'week'].includes(period)) {
@@ -213,15 +216,58 @@ travels.get('/:userId/:projectId/grouped/:period', async (c) => {
         const groupedTravels:
             | GroupedTravelData[]
             | GroupedTravelDataWithYear[] =
-            await getTravelsByUserAndProjectGroupedByPeriod(userId, projectId, periodType);
+            await getTravelsByUserAndProjectGroupedByPeriod(
+                userId,
+                projectId,
+                periodType
+            );
         logMessage(SOURCE, `isTravel? ${groupedTravels !== null}`);
         logMessage(SOURCE, 'Prisma got');
 
-        logMessage(SOURCE, '/travels/:userId:/:projectId/grouped/:period GET end');
+        logMessage(
+            SOURCE,
+            '/travels/:userId:/:projectId/grouped/:period GET end'
+        );
         return c.json(groupedTravels, 200);
     } catch (err) {
         errorMessage(SOURCE, 'Failed to get grouped travels' + err);
         return c.json({ error: 'Failed to get grouped travels' }, 500);
+    }
+});
+
+/**
+ * 月ごとの旅行データを取得する
+ * @param userId ユーザーID
+ * @param month 月（例: 2024年1月）
+ * @returns 200(旅行データ)
+ * @returns 400
+ * @returns 500
+ */
+travels.get('/:userId/:month', async (c) => {
+    logMessage(SOURCE, '/travels/:userId/:month GET start');
+    const { userId, month } = c.req.param();
+
+    // 月のバリデーション: "YYYY年M月" 形式であるか確認
+    const monthPattern = /^\d{4}年\d{1,2}月$/;
+    if (!monthPattern.test(month)) {
+        errorMessage(SOURCE, 'Invalid month format[400]');
+        return c.json(
+            { error: 'Invalid month format. Expected format is YYYY年M月.' },
+            400
+        );
+    }
+
+    try {
+        logMessage(SOURCE, 'Prisma getting...');
+        const travels = await getTravelsByUserAndProject(userId, month);
+        logMessage(SOURCE, `isTravel? ${travels !== null}`);
+        logMessage(SOURCE, 'Prisma got');
+
+        logMessage(SOURCE, '/travels/:userId/:month GET end');
+        return c.json(travels, 200);
+    } catch (err) {
+        errorMessage(SOURCE, 'Failed to get travels' + err);
+        return c.json({ error: 'Failed to get travels' }, 500);
     }
 });
 
