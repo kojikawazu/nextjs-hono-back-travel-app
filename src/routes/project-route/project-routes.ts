@@ -1,11 +1,14 @@
 import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client';
-import { logMessage, errorMessage } from '../../utils/logging/logging-service';
+import { logMessage, errorMessage } from '@/utils/logging/logging-service';
+
 import {
     getProjectById,
     updateProject,
     deleteProjects,
 } from '@/utils/project/project-services';
+
+import { getProjectPeriod } from '@/utils/travel/travel-services';
 
 const projects = new Hono();
 const prisma = new PrismaClient();
@@ -185,6 +188,64 @@ projects.post('/delete', async (c) => {
     } catch (err) {
         errorMessage(SOURCE, 'Failed to delete projects' + err);
         return c.json({ error: 'Failed to delete projects' }, 500);
+    }
+});
+
+/**
+ * ユーザーIDに紐づくプロジェクトを取得する
+ * @param userId ユーザーID
+ * @query month 月
+ * @returns 200(プロジェクトデータリスト)
+ * @returns 400
+ * @returns 404
+ * @returns 500
+ */
+projects.get('/calendar/user/:userId', async (c) => {
+    logMessage(SOURCE, '/project/calendar/user/:userId GET start');
+    const { userId } = c.req.param();
+    const { month } = c.req.query();
+
+    if (!month) {
+        return c.json({ error: 'Month parameter is required' }, 400);
+    }
+
+    try {
+        logMessage(SOURCE, 'Prisma getting...');
+        const projects = await prisma.project.findMany({
+            where: { userId },
+            select: {
+                id: true,
+                name: true,
+            },
+        });
+        logMessage(SOURCE, `isProject? ${projects.length > 0}`);
+
+        if (projects.length === 0) {
+            errorMessage(SOURCE, 'Project not found[404]');
+            return c.json({ error: 'Project not found' }, 404);
+        }
+
+        const projectsWithPeriods = await Promise.all(
+            projects.map(async (project) => {
+                const period = await getProjectPeriod(project.id, month);
+                return {
+                    id: project.id,
+                    name: project.name,
+                    startDate: period.startDate,
+                    endDate: period.endDate,
+                };
+            })
+        );
+        // startDateとendDateがnullのプロジェクトを除外する
+        const filteredProjects = projectsWithPeriods.filter(
+            (project) => project.startDate && project.endDate
+        );
+
+        logMessage(SOURCE, '/projects/calendar/user/:userId GET end');
+        return c.json(filteredProjects, 200);
+    } catch (err) {
+        errorMessage(SOURCE, 'Failed to get projects' + err);
+        return c.json({ error: 'Failed to fetch projects' }, 500);
     }
 });
 
