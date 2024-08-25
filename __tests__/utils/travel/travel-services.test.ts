@@ -11,6 +11,7 @@ import {
     getTravelsByUserGroupedByPeriod,
     getTravelsByUserAndProjectGroupedByPeriod,
     getTravelsByUserAndMonth,
+    getProjectPeriod,
 } from '@/utils/travel/travel-services';
 
 // mock
@@ -530,6 +531,76 @@ describe('travel-services', () => {
             await expect(
                 getTravelsByUserAndMonth('user1', '2024年1月')
             ).rejects.toThrow('Prisma error');
+        });
+    });
+
+    describe('getProjectPeriod', () => {
+        beforeEach(() => {
+            jest.clearAllMocks();
+        });
+
+        it('should return null for startDate and endDate when no travels are found', async () => {
+            (prisma.travel.findMany as jest.Mock).mockResolvedValue([]);
+
+            const result = await getProjectPeriod('test-project-id', '2024-04');
+            expect(result).toEqual({ startDate: null, endDate: null });
+        });
+
+        it('should return correct startDate and endDate when travels are found', async () => {
+            const mockTravels = [
+                { date: new Date('2024-04-01T00:00:00Z') },
+                { date: new Date('2024-04-10T00:00:00Z') },
+                { date: new Date('2024-04-05T00:00:00Z') },
+            ];
+
+            (prisma.travel.findMany as jest.Mock).mockResolvedValue(
+                mockTravels
+            );
+
+            const result = await getProjectPeriod('test-project-id', '2024-04');
+            expect(result).toEqual({
+                startDate: new Date('2024-04-01T00:00:00Z'),
+                endDate: new Date('2024-04-10T00:00:00Z'),
+            });
+        });
+
+        it('should handle null dates in the travels array gracefully', async () => {
+            const mockTravels = [
+                { date: null },
+                { date: new Date('2024-04-10T00:00:00Z') },
+                { date: new Date('2024-04-01T00:00:00Z') },
+            ];
+
+            (prisma.travel.findMany as jest.Mock).mockResolvedValue(
+                mockTravels
+            );
+
+            const result = await getProjectPeriod('test-project-id', '2024-04');
+            expect(result).toEqual({
+                startDate: new Date('2024-04-01T00:00:00Z'),
+                endDate: new Date('2024-04-10T00:00:00Z'),
+            });
+        });
+
+        it('should return null dates when all travel dates are null', async () => {
+            const mockTravels = [
+                { date: null },
+                { date: null },
+                { date: null },
+            ];
+
+            (prisma.travel.findMany as jest.Mock).mockResolvedValue(
+                mockTravels
+            );
+
+            const result = await getProjectPeriod('test-project-id', '2024-04');
+            expect(result).toEqual({ startDate: null, endDate: null });
+        });
+
+        it('should throw an error for invalid date format', async () => {
+            await expect(
+                getProjectPeriod('test-project-id', 'invalid-month')
+            ).rejects.toThrow('Invalid date format');
         });
     });
 });
