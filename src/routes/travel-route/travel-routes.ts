@@ -12,6 +12,7 @@ import {
     getTravelsByUserAndProject,
     getTravelsByUserGroupedByPeriod,
     getTravelsByUserAndProjectGroupedByPeriod,
+    getTravelsByUserAndMonth,
 } from '../../utils/travel/travel-services';
 
 const travels = new Hono();
@@ -32,7 +33,10 @@ travels.get('/:userId/:projectId', async (c) => {
     try {
         logMessage(SOURCE, 'Prisma getting...');
         const travels = await getTravelsByUserAndProject(userId, projectId);
-        logMessage(SOURCE, `isTravel? ${travels !== null}`);
+        logMessage(
+            SOURCE,
+            `isTravel? ${travels !== null && travels.length > 0}`
+        );
         logMessage(SOURCE, 'Prisma got');
 
         logMessage(SOURCE, '/projects/:userId/:projectId GET end');
@@ -177,7 +181,10 @@ travels.get('/:userId/grouped/:period', async (c) => {
             | GroupedTravelData[]
             | GroupedTravelDataWithYear[] =
             await getTravelsByUserGroupedByPeriod(userId, periodType);
-        logMessage(SOURCE, `isTravel? ${groupedTravels !== null}`);
+        logMessage(
+            SOURCE,
+            `isTravel? ${groupedTravels !== null && groupedTravels.length > 0}`
+        );
         logMessage(SOURCE, 'Prisma got');
 
         logMessage(SOURCE, '/travels/:userId:/grouped/:period GET end');
@@ -221,7 +228,10 @@ travels.get('/:userId/:projectId/grouped/:period', async (c) => {
                 projectId,
                 periodType
             );
-        logMessage(SOURCE, `isTravel? ${groupedTravels !== null}`);
+        logMessage(
+            SOURCE,
+            `isTravel? ${groupedTravels !== null && groupedTravels.length > 0}`
+        );
         logMessage(SOURCE, 'Prisma got');
 
         logMessage(
@@ -243,7 +253,7 @@ travels.get('/:userId/:projectId/grouped/:period', async (c) => {
  * @returns 400
  * @returns 500
  */
-travels.get('/:userId/:month', async (c) => {
+travels.get('/calendar/:userId/:month', async (c) => {
     logMessage(SOURCE, '/travels/:userId/:month GET start');
     const { userId, month } = c.req.param();
 
@@ -259,8 +269,11 @@ travels.get('/:userId/:month', async (c) => {
 
     try {
         logMessage(SOURCE, 'Prisma getting...');
-        const travels = await getTravelsByUserAndProject(userId, month);
-        logMessage(SOURCE, `isTravel? ${travels !== null}`);
+        const travels = await getTravelsByUserAndMonth(userId, month);
+        logMessage(
+            SOURCE,
+            `isTravel? ${travels !== null && travels.length > 0}`
+        );
         logMessage(SOURCE, 'Prisma got');
 
         logMessage(SOURCE, '/travels/:userId/:month GET end');
